@@ -2,7 +2,9 @@
 {
     using Android.Views;
     using Android.Widget;
+    using AndroidX.RecyclerView.Selection;
     using AndroidX.RecyclerView.Widget;
+    using System;
     using System.Collections.Generic;
 
     internal class CarAdapter : RecyclerView.Adapter
@@ -11,10 +13,17 @@
 
         public CarAdapter(List<Car> cars)
         {
+            HasStableIds = true;
+
             list = cars;
         }
 
         public override int ItemCount => list.Count;
+
+        public override long GetItemId(int position)
+        {
+            return Convert.ToInt64(position);
+        }
 
         public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
         {
@@ -48,6 +57,11 @@
                 year.Text = car.Year.ToString();
                 make.Text = car.Make;
                 model.Text = car.Model;
+            }
+
+            public ItemDetailsLookup.ItemDetails GetItemDetails()
+            {
+                return new CarItemDetails(AdapterPosition, ItemId);
             }
         }
     }
