@@ -2,7 +2,9 @@
 {
     using Android.App;
     using Android.OS;
+    using Android.Widget;
     using AndroidX.AppCompat.App;
+    using AndroidX.RecyclerView.Selection;
     using AndroidX.RecyclerView.Widget;
     using System.Collections.Generic;
 
@@ -10,6 +12,7 @@
     public class MainActivity : AppCompatActivity
     {
         private CarAdapter adapter;
+        private SelectionTracker tracker;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -26,7 +29,26 @@
                 recyclerView.HasFixedSize = true;
                 recyclerView.AddItemDecoration(new DividerItemDecoration(recyclerView.Context, DividerItemDecoration.Vertical));
                 recyclerView.SetAdapter(adapter);
+                tracker = new SelectionTracker.Builder("mySelection", 
+                    recyclerView,
+                    new StableIdKeyProvider(recyclerView), 
+                    new CarItemDetailsLookup(recyclerView), 
+                    StorageStrategy.CreateLongStorage())
+                    .WithSelectionPredicate(SelectionPredicates.CreateSelectAnything())
+                    .Build();
+                adapter.SelectionTracker = tracker;
             }
+        }
+
+        private void Button_Click(object sender, System.EventArgs e)
+        {
+        }
+
+        protected override void OnSaveInstanceState(Bundle outState)
+        {
+            base.OnSaveInstanceState(outState);
+            if (outState != null)
+                tracker?.OnSaveInstanceState(outState);
         }
 
         private List<Car> GenerateCarList()

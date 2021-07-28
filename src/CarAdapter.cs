@@ -18,6 +18,8 @@
             list = cars;
         }
 
+        public SelectionTracker SelectionTracker { get; set; }
+
         public override int ItemCount => list.Count;
 
         public override long GetItemId(int position)
@@ -28,7 +30,7 @@
         public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
         {
             var typedHolder = holder as CarViewHolder;
-            typedHolder.Bind(list[position]);
+            typedHolder.Bind(list[position], SelectionTracker.IsSelected(Convert.ToInt64(position)));
         }
 
         public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
@@ -52,11 +54,13 @@
                 model = view.FindViewById<TextView>(Resource.Id.car_model);
             }
 
-            public void Bind(Car car)
+            public void Bind(Car car, bool isActivated)
             {
                 year.Text = car.Year.ToString();
                 make.Text = car.Make;
                 model.Text = car.Model;
+
+                ItemView.Activated = isActivated;
             }
 
             public ItemDetailsLookup.ItemDetails GetItemDetails()
