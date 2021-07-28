@@ -7,8 +7,9 @@
     android:layout_height="wrap_content"
     android:paddingTop="4dp"
     android:paddingBottom="4dp"
-    android:minHeight="?android:attr/listPreferredItemHeightSmall">
-
+    android:minHeight="?android:attr/listPreferredItemHeightSmall"
+    android:background="@drawable/item_car_background">
+    
     <TextView
         android:id="@+id/car_year"
         android:layout_width="match_parent"
