@@ -2,16 +2,24 @@
 {
     using Android.App;
     using Android.OS;
+    using Android.Views;
     using AndroidX.AppCompat.App;
     using AndroidX.RecyclerView.Selection;
     using AndroidX.RecyclerView.Widget;
+    using Java.Util;
+    using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true)]
-    public class MainActivity : AppCompatActivity
+    public class MainActivity : AppCompatActivity, ActionMode.ICallback
     {
+        private const string TAG = "AndroidXRecyclerViewSelection";
+        private ActionMode? actionMode;
+        private List<Car> cars;
         private CarAdapter adapter;
         private SelectionTracker tracker;
+        private CarSelectionObserver trackerObserver;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -22,7 +30,8 @@
 
             if (savedInstanceState == null)
             {
-                adapter = new CarAdapter(GenerateCarList());
+                cars = GenerateCarList();
+                adapter = new CarAdapter(cars);
                 adapter.NotifyDataSetChanged();
                 recyclerView.SetLayoutManager(new LinearLayoutManager(this));
                 recyclerView.HasFixedSize = true;
@@ -36,6 +45,9 @@
                     .WithSelectionPredicate(SelectionPredicates.CreateSelectAnything())
                     .Build();
                 adapter.SelectionTracker = tracker;
+
+                trackerObserver = new CarSelectionObserver(this);
+                tracker.AddObserver(trackerObserver);
             }
         }
 
@@ -156,6 +168,118 @@
                     Vin = "14"
                 }
             });
+        }
+
+        private List<Car> GetSelection()
+        {
+            var selection = new List<Car>();
+            MutableSelection mutableSelection = new MutableSelection();
+            tracker.CopySelection(mutableSelection);
+            IIterator iterator = mutableSelection.Iterator();
+            while (iterator.HasNext)
+            {
+                var obj = iterator.Next();
+                selection.Add(cars[Convert.ToInt32(obj)]);
+            }
+            return selection;
+        }
+
+        private int GetSelectionCount()
+        {
+            int counter = 0;
+            MutableSelection mutableSelection = new MutableSelection();
+            tracker.CopySelection(mutableSelection);
+            IIterator iterator = mutableSelection.Iterator();
+            while (iterator.HasNext)
+            {
+                iterator.Next();
+                counter++;
+            }
+            return counter;
+        }
+
+        bool ActionMode.ICallback.OnActionItemClicked(ActionMode mode, IMenuItem item)
+        {
+            Android.Util.Log.Verbose(TAG, "ICallback.OnActionItemClicked()");
+            switch (item.ItemId)
+            {
+                case Resource.Id.action_delete:
+                    var selection = GetSelection();
+                    foreach (var selected in selection)
+                    {
+                        Android.Util.Log.Debug(TAG, "Delete {0}", selected);
+                    }
+                    mode.Finish();
+                    return true;
+            }
+            return false;
+        }
+
+        bool ActionMode.ICallback.OnCreateActionMode(ActionMode mode, IMenu menu)
+        {
+            Android.Util.Log.Verbose(TAG, "ICallback.OnCreateActionMode()");
+            mode.MenuInflater.Inflate(Resource.Menu.menu_car, menu);
+            return true;
+        }
+
+        void ActionMode.ICallback.OnDestroyActionMode(ActionMode mode)
+        {
+            Android.Util.Log.Verbose(TAG, "ICallback.OnDestroyActionMode()");
+            tracker?.ClearSelection();
+            actionMode = null;
+        }
+
+        bool ActionMode.ICallback.OnPrepareActionMode(ActionMode mode, IMenu menu)
+        {
+            Android.Util.Log.Verbose(TAG, "ICallback.OnPrepareActionMode()");
+            return false;
+        }
+
+        internal class CarSelectionObserver : SelectionTracker.SelectionObserver
+        {
+            private readonly WeakReference<MainActivity> mainActivity;
+
+            public CarSelectionObserver(MainActivity mainActivity)
+            {
+                this.mainActivity = new WeakReference<MainActivity>(mainActivity);
+            }
+
+            public override void OnItemStateChanged(Java.Lang.Object key, bool selected)
+            {
+                base.OnItemStateChanged(key, selected);
+                Android.Util.Log.Verbose(TAG, "SelectionObserver.OnItemStateChanged()");
+            }
+
+            public override void OnSelectionChanged()
+            {
+                base.OnSelectionChanged();
+                Android.Util.Log.Verbose(TAG, "SelectionObserver.OnSelectionChanged()");
+                if (mainActivity.TryGetTarget(out var activity))
+                {
+                    if (activity.actionMode == null)
+                    {
+                        activity.actionMode = activity.StartActionMode(activity);
+                    }
+                }
+            }
+
+            protected override void OnSelectionCleared()
+            {
+                base.OnSelectionCleared();
+                Android.Util.Log.Verbose(TAG, "SelectionObserver.OnSelectionCleared()");
+            }
+
+            public override void OnSelectionRefresh()
+            {
+                base.OnSelectionRefresh();
+                Android.Util.Log.Verbose(TAG, "SelectionObserver.OnSelectionRefresh()");
+            }
+
+            public override void OnSelectionRestored()
+            {
+                base.OnSelectionRestored();
+                Android.Util.Log.Verbose(TAG, "SelectionObserver.OnSelectionRestored()");
+            }
         }
     }
 }
