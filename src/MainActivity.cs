@@ -2,7 +2,6 @@
 {
     using Android.App;
     using Android.OS;
-    using Android.Widget;
     using AndroidX.AppCompat.App;
     using AndroidX.RecyclerView.Selection;
     using AndroidX.RecyclerView.Widget;
@@ -29,10 +28,10 @@
                 recyclerView.HasFixedSize = true;
                 recyclerView.AddItemDecoration(new DividerItemDecoration(recyclerView.Context, DividerItemDecoration.Vertical));
                 recyclerView.SetAdapter(adapter);
-                tracker = new SelectionTracker.Builder("mySelection", 
+                tracker = new SelectionTracker.Builder("car-selection", 
                     recyclerView,
                     new StableIdKeyProvider(recyclerView), 
-                    new CarItemDetailsLookup(recyclerView), 
+                    new CarAdapter.CarItemDetailsLookup(recyclerView), 
                     StorageStrategy.CreateLongStorage())
                     .WithSelectionPredicate(SelectionPredicates.CreateSelectAnything())
                     .Build();
@@ -40,15 +39,18 @@
             }
         }
 
-        private void Button_Click(object sender, System.EventArgs e)
-        {
-        }
-
         protected override void OnSaveInstanceState(Bundle outState)
         {
             base.OnSaveInstanceState(outState);
             if (outState != null)
                 tracker?.OnSaveInstanceState(outState);
+        }
+
+        protected override void OnRestoreInstanceState(Bundle savedInstanceState)
+        {
+            base.OnRestoreInstanceState(savedInstanceState);
+            if (savedInstanceState != null)
+                tracker?.OnRestoreInstanceState(savedInstanceState);
         }
 
         private List<Car> GenerateCarList()

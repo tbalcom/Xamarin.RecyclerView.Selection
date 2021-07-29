@@ -7,6 +7,9 @@
     using System;
     using System.Collections.Generic;
 
+    /// <summary>
+    /// Adapter to bind a list of <see cref="Car"/> objects to views that are displayed within a RecyclerView.
+    /// </summary>
     internal class CarAdapter : RecyclerView.Adapter
     {
         private readonly List<Car> list;
@@ -30,7 +33,7 @@
         public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
         {
             var typedHolder = holder as CarViewHolder;
-            typedHolder.Bind(list[position], SelectionTracker.IsSelected(Convert.ToInt64(position)));
+            typedHolder.Bind(list[position], SelectionTracker?.IsSelected(Convert.ToInt64(position)) ?? false);
         }
 
         public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
@@ -41,6 +44,9 @@
             return new CarViewHolder(itemView);
         }
 
+        /// <summary>
+        /// Describes a <see cref="Car"/> item view and metadata about its place within the RecyclerView.
+        /// </summary>
         internal class CarViewHolder : RecyclerView.ViewHolder
         {
             private readonly TextView year;
@@ -66,6 +72,52 @@
             public ItemDetailsLookup.ItemDetails GetItemDetails()
             {
                 return new CarItemDetails(AdapterPosition, ItemId);
+            }
+        }
+
+        /// <summary>
+        /// Provides the selection library with access to information about a specific RecyclerView item.
+        /// </summary>
+        internal class CarItemDetails : ItemDetailsLookup.ItemDetails
+        {
+            private readonly int position;
+            private readonly Java.Lang.Object key;
+
+            public CarItemDetails(int position, Java.Lang.Object key)
+            {
+                this.position = position;
+                this.key = key;
+            }
+
+            public override int Position => position;
+
+            protected override Java.Lang.Object RawSelectionKey => key;
+        }
+
+        /// <summary>
+        /// Provides the selection library access to information about the area and/or ItemDetailsLookup.ItemDetails under a MotionEvent.
+        /// </summary>
+        internal class CarItemDetailsLookup : ItemDetailsLookup
+        {
+            private readonly RecyclerView recyclerView;
+
+            public CarItemDetailsLookup(RecyclerView recyclerView)
+            {
+                this.recyclerView = recyclerView;
+            }
+
+            public override ItemDetails GetItemDetails(MotionEvent @event)
+            {
+                var view = recyclerView.FindChildViewUnder(@event.GetX(), @event.GetY());
+                if (view != null)
+                {
+                    var viewHolder = recyclerView.GetChildViewHolder(view);
+                    if (viewHolder is CarAdapter.CarViewHolder cvh)
+                    {
+                        return cvh.GetItemDetails();
+                    }
+                }
+                return null;
             }
         }
     }
